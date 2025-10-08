@@ -9,11 +9,10 @@ import UIKit
 
 class DetailProductView: UIViewController {
     
-    let product: Product
+    var product: Product
+    let repo: ProductRepository
     var prefetchImage: UIImage?
-    
-    private var isFavorite = false
-    
+        
     let contentView: UIView = {
         let view = UIView()
         
@@ -89,9 +88,10 @@ class DetailProductView: UIViewController {
         configData()
     }
     
-    init (product: Product) {
+    init (product: Product, repo: ProductRepository = FakeStoreProductRepository()) {
         self.product = product
         self.prefetchImage = nil
+        self.repo = repo
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -156,18 +156,29 @@ class DetailProductView: UIViewController {
         } else if let url = URL(string: product.image) {
             ImageDownloader.setImage(into: productImageView, from: url)
         }
+        
+        updateFavoriteButton(isFavorite: product.isFavorite ?? false)
     }
     
     @objc private func toggleFavorite() {
-        isFavorite.toggle()
-        updateFavoriteButton()
+        favButton.isEnabled = false
+        Task {
+            do {
+                let newValue = try await repo.toggleFavorite(id: product.id) // Core Data
+                await MainActor.run {
+                    product.isFavorite = newValue
+                    updateFavoriteButton(isFavorite: newValue)
+                    favButton.isEnabled = true
+                }
+            }
+        }
     }
     
-    private func updateFavoriteButton() {
+    private func updateFavoriteButton(isFavorite: Bool) {
         let title = isFavorite ? "Agregado a favoritos" : "Agregar a favoritos"
         let img   = UIImage(systemName: isFavorite ? "heart.fill" : "heart")
         favButton.setTitle(title, for: .normal)
         favButton.setImage(img, for: .normal)
-        favButton.backgroundColor = isFavorite ? .systemRed : .systemPink
+        favButton.backgroundColor = isFavorite ? .gray : .systemRed
     }
 }

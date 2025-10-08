@@ -20,6 +20,7 @@ struct URLSessionClient: RemoteDataSource {
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             throw URLError(.badServerResponse)
         }
+        print(response)
         return try JSONDecoder().decode(T.self, from: data)
     }
 }

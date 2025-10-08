@@ -14,6 +14,10 @@ protocol ProductRepository {
     func refreshAll() async throws -> [Product]
     func refreshCategory(_ category: String) async throws -> [Product]
     func isCacheStale(maxAge: TimeInterval) -> Bool
+    
+    // Favs
+    func getFavorites() async throws -> [Product]
+    func toggleFavorite(id: Int) async throws -> Bool
 }
 
 class FakeStoreProductRepository: ProductRepository {
@@ -73,5 +77,14 @@ class FakeStoreProductRepository: ProductRepository {
         try local.saveProducts(fresh) // guardamos/actualizamos solo los de esa categoría
         try local.saveCacheDate(Date())
         return fresh
+    }
+    
+// MARK: - Functions Favs
+    func toggleFavorite(id: Int) async throws -> Bool {
+        try local.toggleFavorite(id: id)
+    }
+    
+    func getFavorites() async throws -> [Product] {
+        try local.fetchFavorites()
     }
 }

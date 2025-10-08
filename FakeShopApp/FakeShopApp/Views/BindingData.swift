@@ -31,3 +31,13 @@ extension HomeStoreView {
         }
     }
 }
+
+extension FavoritesView {
+    func favsBindingData() {
+        viewModel.refreshData = { [weak self] in
+            guard let self else { return }
+            self.products = self.viewModel.allProducts
+            self.productsCollectionView.reloadData()
+        }
+    }
+}

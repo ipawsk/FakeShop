@@ -14,7 +14,8 @@ extension ProductEntity {
             price: price,
             description: productDescription ?? "",
             category: category ?? "",
-            image: image ?? ""
+            image: image ?? "",
+            isFavorite: isFavorite
         )
     }
 

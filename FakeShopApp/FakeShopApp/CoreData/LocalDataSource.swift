@@ -15,6 +15,10 @@ protocol LocalDataSource {
     func clear() throws
     func saveCacheDate(_ date: Date) throws
     func loadCacheDate() throws -> Date?
+    
+    // Favs
+    func toggleFavorite(id: Int) throws -> Bool
+    func fetchFavorites() throws -> [Product]
 }
 
 struct CoreDataLocalDataSource: LocalDataSource {
@@ -39,7 +43,11 @@ struct CoreDataLocalDataSource: LocalDataSource {
             for p in products {
                 let key = Int64(p.id)
                 let entity = map[key] ?? ProductEntity(context: ctx)
-                entity.fill(from: p)
+                
+                //Favoritos en local
+                let keepFav = entity.isFavorite
+                
+                entity.fill(from: p) //Actualiza los datos dede la API (No trae Favs)
                 map[key] = entity
             }
             if ctx.hasChanges { try ctx.save() }
@@ -80,5 +88,34 @@ struct CoreDataLocalDataSource: LocalDataSource {
 
     func loadCacheDate() throws -> Date? {
         UserDefaults.standard.object(forKey: cacheKey) as? Date
+    }
+    
+    //MARK: - Functions Favorites
+    
+    //Cambia el estado de favoritos
+    func toggleFavorite(id: Int) throws -> Bool {
+        let ctx = stack.viewContext
+        var newValue = false
+        try ctx.performAndWait { // lo ejecuta dentro de la cola del context
+            //Hace un fetch por producto, por id
+            let req: NSFetchRequest<ProductEntity> = ProductEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "id == %d", id) // lo filtra por el id
+            req.fetchLimit = 1 // solo necesito 1
+            guard let e = try ctx.fetch(req).first else {
+                throw NSError(domain: "NotFound", code: 404) //Lanza el error si no lo encuentra
+            }
+            e.isFavorite.toggle()
+            newValue = e.isFavorite // guarda el valor para regresarlo
+            try ctx.save()
+        }
+        return newValue
+    }
+    
+    func fetchFavorites() throws -> [Product] {
+        let ctx = stack.viewContext
+        let req: NSFetchRequest<ProductEntity> = ProductEntity.fetchRequest()
+        req.predicate = NSPredicate(format: "isFavorite == YES")
+        req.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        return try ctx.fetch(req).map { $0.toDomain() }
     }
 }

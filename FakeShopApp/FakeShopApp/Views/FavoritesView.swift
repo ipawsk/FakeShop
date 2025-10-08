@@ -8,6 +8,18 @@
 import UIKit
 
 class FavoritesView: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
+    
+    let viewModel: FavoritesViewModel
+    var products: [Product] = []
+    
+    init(viewModel: FavoritesViewModel) {
+           self.viewModel = viewModel
+           super.init(nibName: nil, bundle: nil)
+       }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
         
     lazy var productsCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
@@ -28,7 +40,13 @@ class FavoritesView: UIViewController, UICollectionViewDataSource, UICollectionV
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        favsBindingData()
         configureView()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        viewModel.getFavoritos()
     }
     
     func configureView() {
@@ -55,12 +73,22 @@ class FavoritesView: UIViewController, UICollectionViewDataSource, UICollectionV
     let dummyProducts = ["Computer", "Mobile", "Laptop"]
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return dummyProducts.count
+        return products.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ProductCell", for: indexPath) as! ProductCellView
-        cell.configureData(title: dummyProducts[indexPath.row], imageURL: nil)
+        let favsProduct = products[indexPath.row]
+        cell.configureData(title: favsProduct.title, imageURL: favsProduct.image)
         return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let product = products[indexPath.item]
+        let detail = DetailProductView(product: product)
+        if let cell = collectionView.cellForItem(at: indexPath) as? ProductCellView {
+            detail.prefetchImage = cell.productImageView.image
+        }
+        navigationController?.pushViewController(detail, animated: true)
     }
 }

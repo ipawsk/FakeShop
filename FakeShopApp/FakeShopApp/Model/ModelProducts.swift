@@ -12,4 +12,9 @@ struct Product: Codable {
     let description: String
     let category: String
     let image: String
+    var isFavorite: Bool?
+}
+
+enum CodingKeys: String, CodingKey {
+    case id, title, price, description, category, image
 }

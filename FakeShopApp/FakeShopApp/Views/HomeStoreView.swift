@@ -56,8 +56,8 @@ class HomeStoreView: UIViewController, UICollectionViewDataSource, UICollectionV
     override func viewDidLoad() {
         super.viewDidLoad()
         configTopBar()
-        configureView()
         bindingData()
+        configureView()
         viewModel.cargarProductos()
     }
     
@@ -74,7 +74,8 @@ class HomeStoreView: UIViewController, UICollectionViewDataSource, UICollectionV
     }
     
     @objc private func goFavView() {
-        let vc = FavoritesView()
+        let favViewModel = FavoritesViewModel(repo: FakeStoreProductRepository())
+        let vc = FavoritesView(viewModel: favViewModel)
         navigationController?.pushViewController(vc, animated: true)
     }
     
@@ -155,8 +156,7 @@ class HomeStoreView: UIViewController, UICollectionViewDataSource, UICollectionV
                 detail.prefetchImage = cell.productImageView.image
             }
             
-            let vc = DetailProductView(product: product)
-            navigationController?.pushViewController(vc, animated: true)
+            navigationController?.pushViewController(detail, animated: true)
         }
     }
 }
